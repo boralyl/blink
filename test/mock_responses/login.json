@@ -1,0 +1,13 @@
+{
+    "authtoken": {
+        "authtoken": "anauthtoken", 
+        "message": "auth"
+    },
+    "networks": {
+        "2": {
+            "name": "Home", 
+            "onboarded": true
+        }
+    },
+    "region": {"u001": "United States"}
+}

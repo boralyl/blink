@@ -1,15 +1,20 @@
 from __future__ import print_function
-import io, json, os, requests, sys, yaml
+
+import io
+import json
+import os
+import sys
 from time import sleep
+
 import dateutil.parser
+import requests
+import yaml
 
-
-__version__ = '0.3.0'
 
 def save_to_file(content, filename):
-    f = open(filename, 'wb')
-    f.write(content)
-    f.close()
+    with open(filename, 'wb') as fp:
+        fp.write(content)
+
 
 def remove_info(filefrom, fileto):
     fw = open(fileto, "w")
@@ -33,37 +38,42 @@ def remove_info(filefrom, fileto):
 
     fw.close()
 
+
 class Network(object):
     def __init__(self, **kwargs):
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             setattr(self, k, v)
     def __repr__(self):
         return '<Network id=%s name=%s>' % (self.id, repr(self.name))
 
+
 class Event(object):
     def __init__(self, **kwargs):
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             setattr(self, k, v)
     def __repr__(self):
         return '<Event id=%s camera=%s at=%s>' % (self.id, repr(self.camera_name), repr(self.created_at))
 
+
 class Video(object):
     def __init__(self, **kwargs):
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             setattr(self, k, v)
     def __repr__(self):
         return '<Video id=%s camera=%s at=%s>' % (self.id, repr(self.camera_name), repr(self.created_at))
 
+
 class SyncModule(object):
     def __init__(self, **kwargs):
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             setattr(self, k, v)
     def __repr__(self):
         return '<SyncModule %s>' % repr(self.__dict__)
 
+
 class Camera(object):
     def __init__(self, **kwargs):
-        for k,v in kwargs.items():
+        for k,v in list(kwargs.items()):
             setattr(self, k, v)
     def __repr__(self):
         return '<Camera id=%s name=%s>' % (self.id, repr(self.name))
@@ -126,19 +136,20 @@ class Blink(object):
             'password': self._password,
             'client_specifier': 'iPhone 9.2 | 2.2 | 222',
         }
+        print(self._path('login'))
         resp = requests.post(self._path('login'), json=data, headers=headers)
         if resp.status_code!=200:
             raise Exception(resp.json()['message'])
         raw = resp.json()
         self._networks_by_id = raw['networks']
         self.networks = []
-        for network_id, network in self._networks_by_id.items():
+        for network_id, network in list(self._networks_by_id.items()):
             network = dict(network)
             network['id'] = network_id
             network = Network(**network)
             self.networks.append(network)
 
-        (self._region, value) = raw['region'].items()[0]
+        (self._region, value) = list(raw['region'].items())[0]
         self._authtoken = raw['authtoken']
 
     def cameras(self, network, type='motion'):
@@ -149,25 +160,26 @@ class Blink(object):
         return cameras
 
     def homescreen(self):
-        '''
+        """
         Return information displayed on the home screen of the mobile client
-        '''
+        """
         self._connect_if_needed()
+        print(self._path('homescreen'))
         resp = requests.get(self._path('homescreen'), headers=self._auth_headers)
         return resp.json()
 
     def download_thumbnail_event_v2(self, event):
-        '''
+        """
           returns the jpg data as a file-like object
-        '''
+        """
         self._connect_if_needed()
         resp = requests.get(self._path(event.thumbnail+".jpg"), headers=self._auth_headers)
         return resp.content
 
     def download_thumbnail_home_v2(self, device):
-        '''
+        """
           returns the jpg data as a file-like object
-        '''
+        """
         self._connect_if_needed()
         filename = device['thumbnail']+".jpg"
         resp = requests.get(self._path(filename), headers=self._auth_headers)
@@ -186,9 +198,9 @@ class Blink(object):
         return resp.json()['count']
 
     def download_video_v2(self, event):
-        '''
+        """
           returns the mp4 data as a file-like object
-        '''
+        """
         self._connect_if_needed()
         resp = requests.get(self._path(event.address), headers=self._auth_headers)
         return resp.content
@@ -224,9 +236,9 @@ class Blink(object):
         return ids
 
     def refresh_all_cameras_thumbnail(self):
-        '''
+        """
           Refresh all cameras with lastest thumbnails
-        '''
+        """
         self._connect_if_needed()
 
         resp = requests.get(self._path("networks"), headers=self._auth_headers)
@@ -244,9 +256,9 @@ class Blink(object):
         return ;
 
     def refresh_all_cameras_video(self):
-        '''
+        """
           Refresh all cameras with lastest thumbnails
-        '''
+        """
         self._connect_if_needed()
 
         resp = requests.get(self._path("networks"), headers=self._auth_headers)
@@ -288,41 +300,41 @@ class Blink(object):
 ##  Other Client APIs
 ###############################################################################
     def sync_modules(self, network):
-        '''
+        """
           Response: JSON response containing information about the known state of the Sync module, most notably if it is online
           Notes: Probably not strictly needed but checking result can verify that the sync module is online and will respond to requests to arm/disarm, etc.
-        '''
+        """
         self._connect_if_needed()
         resp = requests.get(self._path('network/%s/syncmodules' % network.id), headers=self._auth_headers)
         return [SyncModule(**resp.json()['syncmodule'])]
 
     def arm(self, network):
-        '''
+        """
           Arm the given network (start recording/reporting motion events)
           Response: JSON response containing information about the disarm command request, including the command/request ID
           Notes: When this call returns, it does not mean the disarm request is complete, the client must gather the request ID from the response and poll for the status of the command.
-        '''
+        """
         self._connect_if_needed()
         resp = requests.post(self._path('network/%s/arm' % network.id), headers=self._auth_headers)
         return resp.json()
 
     def disarm(self, network):
-        '''
+        """
           Disarm the given network (stop recording/reporting motion events)
           Response: JSON response containing information about the disarm command request, including the command/request ID
           Notes: When this call returns, it does not mean the disarm request is complete, the client must gather the request ID from the response and poll for the status of the command.
-        '''
+        """
         self._connect_if_needed()
         resp = requests.post(self._path('network/%s/disarm' % network.id), headers=self._auth_headers)
         return resp.json()
 
     def command_status(self, network, command_id):
-        '''
+        """
           Get status info on the given command
           Response: JSON response containing state information of the given command, most notably whether it has completed and was successful.
           Notes: After an arm/disarm command, the client appears to poll this URL every second or so until the response indicates the command is complete.
           Known Commands: lv_relay, arm, disarm, thumbnail, clip
-        '''
+        """
         self._connect_if_needed()
         resp = requests.get(self._path('network/%s/command/%s' % (network.id, command_id)), headers=self._auth_headers)
         return resp.json()
@@ -387,18 +399,18 @@ class Blink(object):
         return cameraSensorInfos
 
     def clients(self):
-        '''
+        """
           Request Gets information about devices that have connected to the blink service
           Response JSON response containing client information, including: type, name, connection time, user ID
-        '''
+        """
         self._connect_if_needed()
         resp = requests.get(self._path('account/clients'), headers=self._auth_headers)
         return resp.json()
 
     def regions(self):
-        '''
+        """
           Gets information about supported regions
-        '''
+        """
         self._connect_if_needed()
         resp = requests.get(self._path('regions'), headers=self._auth_headers)
         return resp.json()
@@ -416,27 +428,27 @@ class Blink(object):
         return events
 
     def download_video(self, event):
-        '''
+        """
           returns the mp4 data as a file-like object
-        '''
+        """
         self._connect_if_needed()
         resp = requests.get(self._path(event.video_url), headers=self._auth_headers)
         return resp.content
 
     def download_thumbnail(self, event):
-        '''
+        """
           returns the jpg data as a file-like object
           doesn't work - server returns 404
-        '''
+        """
         self._connect_if_needed()
         thumbnail_url = self._path(event.video_url[:-4] + '.jpg')
         resp = requests.get(thumbnail_url, headers=self._auth_headers)
         return resp.content
 
     def health(self):
-        '''
+        """
           Gets information about system health
-        '''
+        """
         self._connect_if_needed()
         resp = requests.get(self._path('health'), headers=self._auth_headers)
         return resp.json()

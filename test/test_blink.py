@@ -1,6 +1,22 @@
-import sys, json, unittest
+from __future__ import print_function
+
+import json
+import os
+import sys
+import unittest
+
+import requests_mock
+
 import blink
 from blink import Blink
+
+
+def get_mock_response(response_filename):
+    pth = os.path.join(
+        os.path.dirname(__file__), 'mock_responses', response_filename)
+    with open(pth) as fp:
+        return json.load(fp)
+
 
 ###############################################################################
 ##  Unittests for Blink Client APIs
@@ -11,7 +27,10 @@ class TestBlink(unittest.TestCase):
 
     def setUp(self):
         self.b = Blink(self.email, self.password)
-        self.b.login()
+        with requests_mock.Mocker() as m:
+            m.post('https://rest.prod.immedia-semi.com/login',
+                   json=get_mock_response('login.json'))
+            self.b.login()
 
 ###############################################################################
 ##  Highlighted Client APIs
@@ -19,7 +38,13 @@ class TestBlink(unittest.TestCase):
     def test_login(self):
         self.assertTrue(self.b.connected)
 
-    def test_homescreen(self):
+    @requests_mock.Mocker()
+    def test_homescreen(self, m):
+        m.get('https://rest.u001.immedia-semi.com/homescreen',
+              json=get_mock_response('homescreen.json'))
+        m.get('https://rest.u001.immedia-semi.com/media/u001/account/1/network'
+              '/1/camera/1/clip_foobar__2018_11_24__05_15AM.jpg', text='')
+
         data = self.b.homescreen()
         self.assertTrue(data['account'] is not None)
         self.assertTrue(data['network'] is not None)

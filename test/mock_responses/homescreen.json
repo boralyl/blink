@@ -1,0 +1,48 @@
+{
+    "account": {"notifications": 1},
+    "devices": [
+        {
+            "active": "disarmed",
+            "armed": false,
+            "battery": 3,
+            "battery_state": "ok",
+            "device_id": 1,
+            "device_type": "camera",
+            "enabled": true,
+            "error_msg": "",
+            "errors": 0,
+            "lfr_strength": 5,
+            "name": "Camera 1",
+            "notifications": 1,
+            "status": "done",
+            "temp": 68,
+            "thumbnail": "/media/u001/account/1/network/1/camera/1/clip_foobar__2018_11_24__05_15AM",
+            "type": "xt",
+            "updated_at": "2018-11-24T05:21:55+00:00",
+            "usage_rate": false,
+            "warning": 0,
+            "wifi_strength": 5
+        },
+        {
+            "device_id": 2,
+            "device_type": "sync_module",
+            "error_msg": "",
+            "errors": 0,
+            "last_hb": "2018-11-24T05:25:26+00:00",
+            "notifications": 0,
+            "status": "online",
+            "updated_at": "2018-11-24T04:12:06+00:00",
+            "warning": 0
+        }
+    ],
+    "network": {
+        "armed": false,
+        "enable_temp_alerts": true,
+        "error_msg": "",
+        "name": "Home",
+        "notifications": 1,
+        "status": "ok",
+        "warning": 0,
+        "wifi_strength": 5
+    }
+}
